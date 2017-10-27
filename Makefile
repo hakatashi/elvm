@@ -85,6 +85,7 @@ ELC_SRCS := \
 	el.c \
 	forth.c \
 	fs.c \
+	fugue.c \
 	go.c \
 	i.c \
 	java.c \
@@ -398,6 +399,10 @@ RUNNER := tools/runfs.sh
 CAN_BUILD := $(if $(or $(shell which dotnet),$(and $(shell which mono),$(shell which fsharpc))),1,0)
 include target.mk
 $(OUT.eir.fs.out): tools/runfs.sh
+
+TARGET := fugue
+RUNNER := fugue
+include target.mk
 
 TARGET := pl
 RUNNER := perl
