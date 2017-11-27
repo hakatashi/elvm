@@ -105,6 +105,7 @@ ELC_SRCS := \
 	tex.c \
 	tf.c \
 	tm.c \
+	trsq.c \
 	unl.c \
 	vim.c \
 	ws.c \
