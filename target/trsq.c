@@ -39,6 +39,11 @@ static int TRSQREG[] = {
 
 void emit_elf_header(uint16_t machine, uint32_t filesz);
 
+static void emit_trsq_2le(int a, int b) {
+  emit_1(a);
+  emit_1(b);
+}
+
 static void emit_trsq_4le(int a, int b, int c, int d) {
   emit_1(d);
   emit_1(c);
@@ -66,6 +71,38 @@ typedef enum {
   Trsq_Shl16 = 8,
   Trsq_Shl8 = 12
 } TrsqImmRot;
+
+static void emit_trsq_add(int imm8) {
+  emit_trsq_2le(0x20, imm8);
+}
+
+static void emit_trsq_sub(int imm8) {
+  emit_trsq_2le(0x21, imm8);
+}
+
+static void emit_trsq_add(int imm8) {
+  emit_trsq_2le(0x27, imm8);
+}
+
+static void emit_trsq_or(int imm8) {
+  emit_trsq_2le(0x28, imm8);
+}
+
+static void emit_trsq_not() {
+  emit_trsq_2le(0x29, 0);
+}
+
+static void emit_trsq_xor(int imm8) {
+  emit_trsq_2le(0x2b, imm8);
+}
+
+static void emit_trsq_btc(int b, int imm8) {
+  emit_trsq_2le(0x40 & b, imm8);
+}
+
+static void emit_trsq_bts(int b, int imm8) {
+  emit_trsq_2le(0x48 & b, imm8);
+}
 
 static void emit_trsq_mov_reg(Reg dst, Reg src) {
   emit_trsq_4le(0xe1, 0xa0, TRSQREG[dst] * 16, TRSQREG[src]);
