@@ -89,7 +89,7 @@ static void emit_trsq_or(int addr) {
 }
 
 static void emit_trsq_not() {
-  emit_trsq_2le(0x29, 0);
+  emit_trsq_2le(0x29, 0x00);
 }
 
 static void emit_trsq_xor(int addr) {
@@ -97,11 +97,11 @@ static void emit_trsq_xor(int addr) {
 }
 
 static void emit_trsq_btc(int bit, int addr) {
-  emit_trsq_2le(0x40 & bit, addr);
+  emit_trsq_2le(0x40 | bit, addr);
 }
 
 static void emit_trsq_bts(int bit, int addr) {
-  emit_trsq_2le(0x48 & bit, addr);
+  emit_trsq_2le(0x48 | bit, addr);
 }
 
 static void emit_trsq_st(int addr) {
@@ -114,6 +114,30 @@ static void emit_trsq_ld(int addr) {
 
 static void emit_trsq_ldl(int imm8) {
   emit_trsq_2le(0x2e, imm8);
+}
+
+static void emit_trsq_skc() {
+  emit_trsq_2le(0x05, 0x00);
+}
+
+static void emit_trsq_skz() {
+  emit_trsq_2le(0x06, 0x00);
+}
+
+static void emit_trsq_nop() {
+  emit_trsq_2le(0x00, 0x00);
+}
+
+static void emit_trsq_halt() {
+  emit_trsq_2le(0x01, 0x00);
+}
+
+static void emit_trsq_goto(int addr) {
+  emit_trsq_2le(0x60 | (addr >> 8), addr & 0xff);
+}
+
+static void emit_trsq_return() {
+  emit_trsq_2le(0x02, 0x00);
 }
 
 static void emit_trsq_mov_reg(Reg dst, Reg src) {
