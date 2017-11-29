@@ -72,36 +72,48 @@ typedef enum {
   Trsq_Shl8 = 12
 } TrsqImmRot;
 
-static void emit_trsq_add(int imm8) {
-  emit_trsq_2le(0x20, imm8);
+static void emit_trsq_add(int addr) {
+  emit_trsq_2le(0x20, addr);
 }
 
-static void emit_trsq_sub(int imm8) {
-  emit_trsq_2le(0x21, imm8);
+static void emit_trsq_sub(int addr) {
+  emit_trsq_2le(0x21, addr);
 }
 
-static void emit_trsq_add(int imm8) {
-  emit_trsq_2le(0x27, imm8);
+static void emit_trsq_add(int addr) {
+  emit_trsq_2le(0x27, addr);
 }
 
-static void emit_trsq_or(int imm8) {
-  emit_trsq_2le(0x28, imm8);
+static void emit_trsq_or(int addr) {
+  emit_trsq_2le(0x28, addr);
 }
 
 static void emit_trsq_not() {
   emit_trsq_2le(0x29, 0);
 }
 
-static void emit_trsq_xor(int imm8) {
-  emit_trsq_2le(0x2b, imm8);
+static void emit_trsq_xor(int addr) {
+  emit_trsq_2le(0x2b, addr);
 }
 
-static void emit_trsq_btc(int b, int imm8) {
-  emit_trsq_2le(0x40 & b, imm8);
+static void emit_trsq_btc(int bit, int addr) {
+  emit_trsq_2le(0x40 & bit, addr);
 }
 
-static void emit_trsq_bts(int b, int imm8) {
-  emit_trsq_2le(0x48 & b, imm8);
+static void emit_trsq_bts(int bit, int addr) {
+  emit_trsq_2le(0x48 & bit, addr);
+}
+
+static void emit_trsq_st(int addr) {
+  emit_trsq_2le(0x2c, addr);
+}
+
+static void emit_trsq_ld(int addr) {
+  emit_trsq_2le(0x2d, addr);
+}
+
+static void emit_trsq_ldl(int imm8) {
+  emit_trsq_2le(0x2e, imm8);
 }
 
 static void emit_trsq_mov_reg(Reg dst, Reg src) {
