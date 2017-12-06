@@ -23,6 +23,15 @@ static int TRSQREG[] = {
   15, // TRSQ_PC
 };
 
+static int TRSQREG_ADDR[] = {
+  0x10, // A
+  0x11, // B
+  0x12, // C
+  0x13, // D
+  0x14, // BP
+  0x15, // SP
+};
+
 #define R0 ((Reg)6)
 #define R1 ((Reg)7)
 #define R2 ((Reg)8)
