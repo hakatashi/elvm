@@ -40,13 +40,17 @@ static int TRSQREG_ADDR[] = {
 #define R5 B
 #define R6 C
 #define R7 D
-#define TRSQ_MEM ((Reg)10)
+#define TRSQ_MEM 0x20
 #define RODATA ((Reg)11)
 #define FFFFFF ((Reg)12)
 #define TRSQ_SP ((Reg)13)
 #define TRSQ_PC ((Reg)15)
 
 void emit_elf_header(uint16_t machine, uint32_t filesz);
+
+static uint8_t trsq_imm(uint v) {
+  return v % 256;
+}
 
 static void emit_trsq_2le(int a, int b) {
   emit_1(a);
@@ -89,7 +93,7 @@ static void emit_trsq_sub(int addr) {
   emit_trsq_2le(0x21, addr);
 }
 
-static void emit_trsq_add(int addr) {
+static void emit_trsq_and(int addr) {
   emit_trsq_2le(0x27, addr);
 }
 
@@ -255,44 +259,20 @@ static void emit_trsq_jcc(Inst* inst, int op, int* pc2addr) {
 }
 
 static void init_state_trsq(Data* data, int rodata_addr) {
-  emit_trsq_mov_imm8(R0, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(R1, 4, Trsq_Shl24);
-  emit_trsq_mov_imm8(R2, 3, Trsq_Shl0);  // PROT_READ | PROT_WRITE
-  emit_trsq_mov_imm8(R3, 0x22, Trsq_Shl0);  // MAP_PRIVATE | MAP_ANONYMOUS
-  emit_trsq_mvn_imm8(R4, 0, Trsq_Shl0);  // 0xffffffff
-  emit_trsq_mov_imm8(R5, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(R7, 192, Trsq_Shl0);  // mmap2
-  emit_trsq_svc();
+  emit_trsq_ldl(0);
+  emit_trsq_st(TRSQREG_ADDR[A]);
+  emit_trsq_st(TRSQREG_ADDR[B]);
+  emit_trsq_st(TRSQREG_ADDR[C]);
+  emit_trsq_st(TRSQREG_ADDR[D]);
+  emit_trsq_st(TRSQREG_ADDR[BP]);
+  emit_trsq_st(TRSQREG_ADDR[SP]);
 
-  emit_trsq_mov_reg(TRSQ_MEM, R0);
-
-  int prev = 0;
   for (int mp = 0; data; data = data->next, mp++) {
     if (!data->v)
       continue;
-    int d = (mp - prev) * 4;
-    if (d >= 4096) {
-      emit_trsq_add_imm(R0, d);
-      d = 0;
-    }
-    emit_trsq_mov_imm(R1, data->v);
-    emit_trsq_4le(0xe5, 0xa0, 0x10 + d / 256, d % 256);
-    prev = mp;
+    emit_trsq_ldl(trsq_imm(data->v));
+    emit_trsq_st(TRSQ_MEM + mp);
   }
-
-  emit_trsq_mov_imm8(RODATA, rodata_addr % 256, Trsq_Shl0);
-  rodata_addr /= 256;
-  emit_trsq_add_imm8(RODATA, rodata_addr % 256, Trsq_Shl8);
-  rodata_addr /= 256;
-  emit_trsq_add_imm8(RODATA, rodata_addr % 256, Trsq_Shl16);
-  emit_trsq_mvn_imm8(FFFFFF, 0xff, Trsq_Shl24);
-
-  emit_trsq_mov_imm8(A, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(B, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(C, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(D, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(BP, 0, Trsq_Shl0);
-  emit_trsq_mov_imm8(SP, 0, Trsq_Shl0);
 }
 
 static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
@@ -334,7 +314,7 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
       reg = R0;
     }
     emit_trsq_mem(inst->op == LOAD ? TRSQ_MEM_LOAD : TRSQ_MEM_STORE,
-		 inst->dst.reg, TRSQ_MEM, reg);
+		 inst->dst.reg, (Reg)TRSQ_MEM, reg);
     break;
 
   case PUTC:
