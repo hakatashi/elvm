@@ -48,7 +48,11 @@ static int TRSQREG_ADDR[] = {
 #define TRSQ_PC ((Reg)15)
 
 static uint8_t trsq_imm(uint v) {
-  return v % 256;
+  return v & 0xFF;
+}
+
+static uint8_t trsq_file(uint v) {
+  return v & 0xFF;
 }
 
 static void emit_trsq_2le(int a, int b) {
@@ -97,7 +101,7 @@ static void emit_trsq_and(int addr) {
 }
 
 static void emit_trsq_or(int addr) {
-  emit_line("    OR %d", addr);
+  emit_line("    OR %d", trsq_file(addr));
 }
 
 static void emit_trsq_not() {
@@ -105,27 +109,27 @@ static void emit_trsq_not() {
 }
 
 static void emit_trsq_xor(int addr) {
-  emit_line("    XOR %d", addr);
+  emit_line("    XOR %d", trsq_file(addr));
 }
 
 static void emit_trsq_btc(int bit, int addr) {
-  emit_line("    BTC %d %d", bit, addr);
+  emit_line("    BTC %d %d", bit, trsq_file(addr));
 }
 
 static void emit_trsq_bts(int bit, int addr) {
-  emit_line("    BTS %d %d", bit, addr);
+  emit_line("    BTS %d %d", bit, trsq_file(addr));
 }
 
 static void emit_trsq_st(int addr) {
-  emit_line("    ST %d", addr);
+  emit_line("    ST %d", trsq_file(addr));
 }
 
 static void emit_trsq_ld(int addr) {
-  emit_line("    LD %d", addr);
+  emit_line("    LD %d", trsq_file(addr));
 }
 
 static void emit_trsq_ldl(int imm8) {
-  emit_line("    LDL %d", imm8);
+  emit_line("    LDL %d", trsq_imm(imm8));
 }
 
 static void emit_trsq_skc() {
@@ -145,7 +149,7 @@ static void emit_trsq_halt() {
 }
 
 static void emit_trsq_goto_imm(int addr) {
-  emit_line("    GOTO %d", addr);
+  emit_line("    GOTO %d", trsq_file(addr));
 }
 
 static void emit_trsq_goto_label(int pc) {
@@ -310,12 +314,17 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
     break;
 
   case SUB:
+    emit_trsq_ld(TRSQREG_ADDR[inst->dst.reg]);
+    emit_trsq_st(TRSQREG_ADDR[R0]);
+
     if (inst->src.type == REG) {
-      emit_trsq_reg2op(TRSQ_SUB, inst->dst.reg, inst->src.reg);
+      emit_trsq_ld(TRSQREG_ADDR[inst->src.reg]);
     } else {
-      emit_trsq_sub_imm(inst->dst.reg, inst->src.imm);
+      emit_trsq_ldl(inst->src.imm);
     }
-    emit_trsq_reg2op(TRSQ_AND, inst->dst.reg, FFFFFF);
+
+    emit_trsq_sub(TRSQREG_ADDR[R0]);
+    emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
     break;
 
   case LOAD:
