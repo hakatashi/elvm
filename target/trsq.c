@@ -46,8 +46,6 @@ static int TRSQREG_ADDR[] = {
 #define TRSQ_SP ((Reg)13)
 #define TRSQ_PC ((Reg)15)
 
-void emit_elf_header(uint16_t machine, uint32_t filesz);
-
 static uint8_t trsq_imm(uint v) {
   return v % 256;
 }
@@ -86,71 +84,71 @@ typedef enum {
 } TrsqImmRot;
 
 static void emit_trsq_add(int addr) {
-  emit_trsq_2le(0x20, addr);
+  emit_line("ADD %d", addr);
 }
 
 static void emit_trsq_sub(int addr) {
-  emit_trsq_2le(0x21, addr);
+  emit_line("SUB %d", addr);
 }
 
 static void emit_trsq_and(int addr) {
-  emit_trsq_2le(0x27, addr);
+  emit_line("AND %d", addr);
 }
 
 static void emit_trsq_or(int addr) {
-  emit_trsq_2le(0x28, addr);
+  emit_line("OR %d", addr);
 }
 
 static void emit_trsq_not() {
-  emit_trsq_2le(0x29, 0x00);
+  emit_line("NOT");
 }
 
 static void emit_trsq_xor(int addr) {
-  emit_trsq_2le(0x2b, addr);
+  emit_line("XOR %d", addr);
 }
 
 static void emit_trsq_btc(int bit, int addr) {
-  emit_trsq_2le(0x40 | bit, addr);
+  emit_line("BTC %d %d", bit, addr);
 }
 
 static void emit_trsq_bts(int bit, int addr) {
-  emit_trsq_2le(0x48 | bit, addr);
+  emit_line("BTS %d %d", bit, addr);
 }
 
 static void emit_trsq_st(int addr) {
-  emit_trsq_2le(0x2c, addr);
+  emit_line("ST %d", addr);
 }
 
 static void emit_trsq_ld(int addr) {
-  emit_trsq_2le(0x2d, addr);
+  emit_line("LD %d", addr);
 }
 
 static void emit_trsq_ldl(int imm8) {
-  emit_trsq_2le(0x2e, imm8);
+  emit_line("LDL %d", imm8);
 }
 
 static void emit_trsq_skc() {
-  emit_trsq_2le(0x05, 0x00);
+  emit_line("SKC");
 }
 
 static void emit_trsq_skz() {
-  emit_trsq_2le(0x06, 0x00);
+  emit_line("SKZ");
 }
 
 static void emit_trsq_nop() {
-  emit_trsq_2le(0x00, 0x00);
+  emit_line("NOP");
 }
 
 static void emit_trsq_halt() {
-  emit_trsq_2le(0x01, 0x00);
+  emit_line("HALT");
 }
 
 static void emit_trsq_goto(int addr) {
-  emit_trsq_2le(0x60 | (addr >> 8), addr & 0xff);
+  emit_line("GOTO %d", addr);
 }
 
 static void emit_trsq_return() {
-  emit_trsq_2le(0x02, 0x00);
+  emit_line("RETURN");
 }
 
 static void emit_trsq_mov_reg(Reg dst, Reg src) {
@@ -429,8 +427,6 @@ void target_trsq(Module* module) {
   }
 
   int rodata_addr = ELF_TEXT_START + emit_cnt() + ELF_HEADER_SIZE;
-
-  emit_elf_header(40, emit_cnt() + pc_cnt * 4);
 
   emit_reset();
   emit_start();
