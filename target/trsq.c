@@ -84,71 +84,75 @@ typedef enum {
 } TrsqImmRot;
 
 static void emit_trsq_add(int addr) {
-  emit_line("ADD %d", addr);
+  emit_line("    ADD %d", addr);
 }
 
 static void emit_trsq_sub(int addr) {
-  emit_line("SUB %d", addr);
+  emit_line("    SUB %d", addr);
 }
 
 static void emit_trsq_and(int addr) {
-  emit_line("AND %d", addr);
+  emit_line("    AND %d", addr);
 }
 
 static void emit_trsq_or(int addr) {
-  emit_line("OR %d", addr);
+  emit_line("    OR %d", addr);
 }
 
 static void emit_trsq_not() {
-  emit_line("NOT");
+  emit_line("    NOT");
 }
 
 static void emit_trsq_xor(int addr) {
-  emit_line("XOR %d", addr);
+  emit_line("    XOR %d", addr);
 }
 
 static void emit_trsq_btc(int bit, int addr) {
-  emit_line("BTC %d %d", bit, addr);
+  emit_line("    BTC %d %d", bit, addr);
 }
 
 static void emit_trsq_bts(int bit, int addr) {
-  emit_line("BTS %d %d", bit, addr);
+  emit_line("    BTS %d %d", bit, addr);
 }
 
 static void emit_trsq_st(int addr) {
-  emit_line("ST %d", addr);
+  emit_line("    ST %d", addr);
 }
 
 static void emit_trsq_ld(int addr) {
-  emit_line("LD %d", addr);
+  emit_line("    LD %d", addr);
 }
 
 static void emit_trsq_ldl(int imm8) {
-  emit_line("LDL %d", imm8);
+  emit_line("    LDL %d", imm8);
 }
 
 static void emit_trsq_skc() {
-  emit_line("SKC");
+  emit_line("    SKC");
 }
 
 static void emit_trsq_skz() {
-  emit_line("SKZ");
+  emit_line("    SKZ");
 }
 
 static void emit_trsq_nop() {
-  emit_line("NOP");
+  emit_line("    NOP");
 }
 
 static void emit_trsq_halt() {
-  emit_line("HALT");
+  emit_line("    HALT");
 }
 
 static void emit_trsq_goto(int addr) {
-  emit_line("GOTO %d", addr);
+  emit_line("    GOTO %d", addr);
 }
 
 static void emit_trsq_return() {
-  emit_line("RETURN");
+  emit_line("    RETURN");
+}
+
+static void emit_trsq_label(int pc) {
+  emit_line("pc_%d:", pc);
 }
 
 static void emit_trsq_mov_reg(Reg dst, Reg src) {
@@ -279,9 +283,11 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
   switch (inst->op) {
   case MOV:
     if (inst->src.type == REG) {
-      emit_trsq_mov_reg(inst->dst.reg, inst->src.reg);
+      emit_trsq_ld(TRSQREG_ADDR[inst->src.reg]);
+      emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
     } else {
-      emit_trsq_mov_imm(inst->dst.reg, inst->src.imm);
+      emit_trsq_ldl(TRSQREG_ADDR[inst->src.imm]);
+      emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
     }
     break;
 
@@ -421,6 +427,7 @@ void target_trsq(Module* module) {
   for (Inst* inst = module->text; inst; inst = inst->next) {
     if (prev_pc != inst->pc) {
       pc2addr[inst->pc] = emit_cnt();
+      emit_trsq_label(inst->pc);
     }
     prev_pc = inst->pc;
     trsq_emit_trsq_inst(inst, pc2addr);
