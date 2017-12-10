@@ -30,6 +30,7 @@ static int TRSQREG_ADDR[] = {
   0x13, // D
   0x14, // BP
   0x15, // SP
+  0x16, // R0
 };
 
 #define R0 ((Reg)6)
@@ -143,8 +144,12 @@ static void emit_trsq_halt() {
   emit_line("    HALT");
 }
 
-static void emit_trsq_goto(int addr) {
+static void emit_trsq_goto_imm(int addr) {
   emit_line("    GOTO %d", addr);
+}
+
+static void emit_trsq_goto_label(int pc) {
+  emit_line("    GOTO pc_%d", pc);
 }
 
 static void emit_trsq_return() {
@@ -284,20 +289,24 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
   case MOV:
     if (inst->src.type == REG) {
       emit_trsq_ld(TRSQREG_ADDR[inst->src.reg]);
-      emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
     } else {
-      emit_trsq_ldl(TRSQREG_ADDR[inst->src.imm]);
-      emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
+      emit_trsq_ldl(inst->src.imm);
     }
+    emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
     break;
 
   case ADD:
+    emit_trsq_ld(TRSQREG_ADDR[inst->dst.reg]);
+    emit_trsq_st(TRSQREG_ADDR[R0]);
+
     if (inst->src.type == REG) {
-      emit_trsq_reg2op(TRSQ_ADD, inst->dst.reg, inst->src.reg);
+      emit_trsq_ld(TRSQREG_ADDR[inst->src.reg]);
     } else {
-      emit_trsq_add_imm(inst->dst.reg, inst->src.imm);
+      emit_trsq_ldl(inst->src.imm);
     }
-    emit_trsq_reg2op(TRSQ_AND, inst->dst.reg, FFFFFF);
+
+    emit_trsq_add(TRSQREG_ADDR[R0]);
+    emit_trsq_st(TRSQREG_ADDR[inst->dst.reg]);
     break;
 
   case SUB:
@@ -415,6 +424,7 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
 
 void target_trsq(Module* module) {
   emit_reset();
+  emit_start();
   init_state_trsq(module->data, 0);
 
   int pc_cnt = 0;
@@ -434,16 +444,4 @@ void target_trsq(Module* module) {
   }
 
   int rodata_addr = ELF_TEXT_START + emit_cnt() + ELF_HEADER_SIZE;
-
-  emit_reset();
-  emit_start();
-  init_state_trsq(module->data, rodata_addr);
-
-  for (Inst* inst = module->text; inst; inst = inst->next) {
-    trsq_emit_trsq_inst(inst, pc2addr);
-  }
-
-  for (int i = 0; i < pc_cnt; i++) {
-    emit_le(ELF_TEXT_START + pc2addr[i] + ELF_HEADER_SIZE);
-  }
 }
