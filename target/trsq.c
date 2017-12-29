@@ -366,9 +366,7 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
     break;
 
   case EXIT:
-    emit_trsq_mov_imm8(R0, 0, Trsq_Shl0);
-    emit_trsq_mov_imm8(R7, 1, Trsq_Shl0);  // exit
-    emit_trsq_svc();
+    emit_trsq_halt();
     break;
 
   case DUMP:
