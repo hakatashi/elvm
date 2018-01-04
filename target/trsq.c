@@ -132,6 +132,14 @@ static void emit_trsq_ldl(int imm8) {
   emit_line("    LDL %d", trsq_imm(imm8));
 }
 
+static void emit_trsq_ldr() {
+  emit_line("    LDR");
+}
+
+static void emit_trsq_rdr() {
+  emit_line("    RDR");
+}
+
 static void emit_trsq_skc() {
   emit_line("    SKC");
 }
@@ -185,15 +193,17 @@ static void emit_trsq_sub_imm8(Reg dst, int imm8, TrsqImmRot rot) {
 }
 
 static void emit_trsq_mov_imm(Reg dst, int imm) {
-  emit_trsq_mov_imm8(dst, imm % 256, Trsq_Shl0);
-  imm /= 256;
-  if (!imm)
-    return;
-  emit_trsq_add_imm8(dst, imm % 256, Trsq_Shl8);
-  imm /= 256;
-  if (!imm)
-    return;
-  emit_trsq_add_imm8(dst, imm % 256, Trsq_Shl16);
+  emit_trsq_ldl(imm % 256);
+  emit_trsq_st(dst);
+  // emit_trsq_mov_imm8(dst, imm % 256, Trsq_Shl0);
+  // imm /= 256;
+  // if (!imm)
+  //   return;
+  // emit_trsq_add_imm8(dst, imm % 256, Trsq_Shl8);
+  // imm /= 256;
+  // if (!imm)
+  //   return;
+  // emit_trsq_add_imm8(dst, imm % 256, Trsq_Shl16);
 }
 
 static void emit_trsq_add_imm(Reg dst, int imm) {
@@ -231,7 +241,13 @@ typedef enum {
 } TrsqLoadOrStore;
 
 static void emit_trsq_mem(TrsqLoadOrStore op, Reg val, Reg base, Reg offset) {
-  emit_trsq_4le(0xe7, op + TRSQREG[base], TRSQREG[val] * 16 + 1, TRSQREG[offset]);
+  if (op == TRSQ_MEM_LOAD){
+    emit_trsq_ld(offset);
+  } else {
+    emit_trsq_ld(offset);
+    emit_trsq_st(base + val);
+  }
+  // emit_trsq_4le(0xe7, op + TRSQREG[base], TRSQREG[val] * 16 + 1, TRSQREG[offset]);
 }
 
 static void emit_trsq_cmp(Inst* inst) {
