@@ -300,6 +300,11 @@ static void init_state_trsq(Data* data, int rodata_addr) {
 static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
   Reg reg;
 
+  // TODO:
+  // PUTC, GETC
+  // JEQ, JNE, JLT, JGT, JLE, JGE
+  // JMP
+  // EQ, NE, LT, GT, LE, GE
   switch (inst->op) {
   case MOV:
     if (inst->src.type == REG) {
