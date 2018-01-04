@@ -136,8 +136,8 @@ static void emit_trsq_ldr() {
   emit_line("    LDR");
 }
 
-static void emit_trsq_rdr() {
-  emit_line("    RDR");
+static void emit_trsq_str() {
+  emit_line("    STR");
 }
 
 static void emit_trsq_skc() {
@@ -195,15 +195,6 @@ static void emit_trsq_sub_imm8(Reg dst, int imm8, TrsqImmRot rot) {
 static void emit_trsq_mov_imm(Reg dst, int imm) {
   emit_trsq_ldl(imm % 256);
   emit_trsq_st(dst);
-  // emit_trsq_mov_imm8(dst, imm % 256, Trsq_Shl0);
-  // imm /= 256;
-  // if (!imm)
-  //   return;
-  // emit_trsq_add_imm8(dst, imm % 256, Trsq_Shl8);
-  // imm /= 256;
-  // if (!imm)
-  //   return;
-  // emit_trsq_add_imm8(dst, imm % 256, Trsq_Shl16);
 }
 
 static void emit_trsq_add_imm(Reg dst, int imm) {
@@ -240,14 +231,19 @@ typedef enum {
   TRSQ_MEM_LOAD = 0x90,
 } TrsqLoadOrStore;
 
-static void emit_trsq_mem(TrsqLoadOrStore op, Reg val, Reg base, Reg offset) {
+static void emit_trsq_mem(TrsqLoadOrStore op, Reg dst, Reg base, Reg src) {
+  emit_line("emit_trsq_mem val=%d, base=%d, offset=%d", dst, base, src);
   if (op == TRSQ_MEM_LOAD){
-    emit_trsq_ld(offset);
+    emit_trsq_ld(TRSQREG_ADDR[src]);
+    emit_trsq_st(0x03);
+    emit_trsq_ldr();
+    emit_trsq_st(TRSQREG_ADDR[dst]);
   } else {
-    emit_trsq_ld(offset);
-    emit_trsq_st(base + val);
+    emit_trsq_ld(TRSQREG_ADDR[dst]);
+    emit_trsq_st(0x03);
+    emit_trsq_ld(TRSQREG_ADDR[src]);
+    emit_trsq_str();
   }
-  // emit_trsq_4le(0xe7, op + TRSQREG[base], TRSQREG[val] * 16 + 1, TRSQREG[offset]);
 }
 
 static void emit_trsq_cmp(Inst* inst) {
@@ -351,34 +347,35 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
       emit_trsq_mov_imm(R0, inst->src.imm);
       reg = R0;
     }
+
     emit_trsq_mem(inst->op == LOAD ? TRSQ_MEM_LOAD : TRSQ_MEM_STORE,
 		 inst->dst.reg, (Reg)TRSQ_MEM, reg);
     break;
 
   case PUTC:
-    if (inst->src.type == REG) {
-      reg = inst->src.reg;
-    } else {
-      reg = R0;
-      emit_trsq_mov_imm8(reg, inst->src.imm, Trsq_Shl0);
-    }
-    emit_trsq_4le(0xe5, 0x2d, TRSQREG[reg] * 16, 0x04);  // push reg
-    emit_trsq_mov_imm8(R0, 1, Trsq_Shl0);  // stdout
-    emit_trsq_mov_reg(R1, TRSQ_SP);
-    emit_trsq_mov_imm8(R2, 1, Trsq_Shl0);
-    emit_trsq_mov_imm8(R7, 4, Trsq_Shl0);  // write
-    emit_trsq_svc();
-    emit_trsq_4le(0xe4, 0x9d, TRSQREG[R0] * 16, 0x04);  // pop R0
+    // if (inst->src.type == REG) {
+    //   reg = inst->src.reg;
+    // } else {
+    //   reg = R0;
+    //   emit_trsq_mov_imm8(reg, inst->src.imm, Trsq_Shl0);
+    // }
+    // emit_trsq_4le(0xe5, 0x2d, TRSQREG[reg] * 16, 0x04);  // push reg
+    // emit_trsq_mov_imm8(R0, 1, Trsq_Shl0);  // stdout
+    // emit_trsq_mov_reg(R1, TRSQ_SP);
+    // emit_trsq_mov_imm8(R2, 1, Trsq_Shl0);
+    // emit_trsq_mov_imm8(R7, 4, Trsq_Shl0);  // write
+    // emit_trsq_svc();
+    // emit_trsq_4le(0xe4, 0x9d, TRSQREG[R0] * 16, 0x04);  // pop R0
     break;
 
   case GETC:
-    emit_trsq_mov_imm8(R0, 0, Trsq_Shl0);  // stdin
-    emit_trsq_4le(0xe5, 0x2d, TRSQREG[R0] * 16, 0x04);  // push 0
-    emit_trsq_mov_reg(R1, TRSQ_SP);
-    emit_trsq_mov_imm8(R2, 1, Trsq_Shl0);
-    emit_trsq_mov_imm8(R7, 3, Trsq_Shl0);  // read
-    emit_trsq_svc();
-    emit_trsq_4le(0xe4, 0x9d, TRSQREG[inst->dst.reg] * 16, 0x04);  // pop dst
+    // emit_trsq_mov_imm8(R0, 0, Trsq_Shl0);  // stdin
+    // emit_trsq_4le(0xe5, 0x2d, TRSQREG[R0] * 16, 0x04);  // push 0
+    // emit_trsq_mov_reg(R1, TRSQ_SP);
+    // emit_trsq_mov_imm8(R2, 1, Trsq_Shl0);
+    // emit_trsq_mov_imm8(R7, 3, Trsq_Shl0);  // read
+    // emit_trsq_svc();
+    // emit_trsq_4le(0xe4, 0x9d, TRSQREG[inst->dst.reg] * 16, 0x04);  // pop dst
     break;
 
   case EXIT:
@@ -389,55 +386,55 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
     break;
 
   case EQ:
-    emit_trsq_setcc(inst, 0x03);
+    // emit_trsq_setcc(inst, 0x03);
     break;
 
   case NE:
-    emit_trsq_setcc(inst, 0x13);
+    // emit_trsq_setcc(inst, 0x13);
     break;
 
   case LT:
-    emit_trsq_setcc(inst, 0xb3);
+    // emit_trsq_setcc(inst, 0xb3);
     break;
 
   case GT:
-    emit_trsq_setcc(inst, 0xc3);
+    // emit_trsq_setcc(inst, 0xc3);
     break;
 
   case LE:
-    emit_trsq_setcc(inst, 0xd3);
+    // emit_trsq_setcc(inst, 0xd3);
     break;
 
   case GE:
-    emit_trsq_setcc(inst, 0xa3);
+    // emit_trsq_setcc(inst, 0xa3);
     break;
 
   case JEQ:
-    emit_trsq_jcc(inst, 0x0a, pc2addr);
+    // emit_trsq_jcc(inst, 0x0a, pc2addr);
     break;
 
   case JNE:
-    emit_trsq_jcc(inst, 0x1a, pc2addr);
+    // emit_trsq_jcc(inst, 0x1a, pc2addr);
     break;
 
   case JLT:
-    emit_trsq_jcc(inst, 0xba, pc2addr);
+    // emit_trsq_jcc(inst, 0xba, pc2addr);
     break;
 
   case JGT:
-    emit_trsq_jcc(inst, 0xca, pc2addr);
+    // emit_trsq_jcc(inst, 0xca, pc2addr);
     break;
 
   case JLE:
-    emit_trsq_jcc(inst, 0xda, pc2addr);
+    // emit_trsq_jcc(inst, 0xda, pc2addr);
     break;
 
   case JGE:
-    emit_trsq_jcc(inst, 0xaa, pc2addr);
+    // emit_trsq_jcc(inst, 0xaa, pc2addr);
     break;
 
   case JMP:
-    emit_trsq_jcc(inst, 0xea, pc2addr);
+    // emit_trsq_jcc(inst, 0xea, pc2addr);
     break;
 
   default:
