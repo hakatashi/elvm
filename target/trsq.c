@@ -382,6 +382,7 @@ static void trsq_emit_trsq_inst(Inst* inst, int* pc2addr) {
     break;
 
   case DUMP:
+    emit_trsq_nop();
     break;
 
   case EQ:
