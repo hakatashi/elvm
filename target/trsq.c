@@ -232,16 +232,15 @@ typedef enum {
 } TrsqLoadOrStore;
 
 static void emit_trsq_mem(TrsqLoadOrStore op, Reg dst, Reg base, Reg src) {
-  emit_line("emit_trsq_mem val=%d, base=%d, offset=%d", dst, base, src);
   if (op == TRSQ_MEM_LOAD){
     emit_trsq_ld(TRSQREG_ADDR[src]);
     emit_trsq_st(0x03);
     emit_trsq_ldr();
     emit_trsq_st(TRSQREG_ADDR[dst]);
   } else {
-    emit_trsq_ld(TRSQREG_ADDR[dst]);
-    emit_trsq_st(0x03);
     emit_trsq_ld(TRSQREG_ADDR[src]);
+    emit_trsq_st(0x03);
+    emit_trsq_ld(TRSQREG_ADDR[dst]);
     emit_trsq_str();
   }
 }
